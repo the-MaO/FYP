@@ -39,7 +39,7 @@ Q_loads = QLOAD(load_indx,:) .* S_base;
 filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
     'XR=' num2str(XR_mltp)];
 
-save ([filename '.mat'], 'V_loads', 'V_ang_loads', 'P_loads', 'Q_loads')
+save ([filename '.mat'], 'V_loads', 'V_ang_loads', 'P_loads', 'Q_loads', 'PGEN')
 
 figure
 mesh(V_loads)

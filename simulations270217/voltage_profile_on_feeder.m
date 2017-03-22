@@ -15,13 +15,15 @@ filename = [load_profile 'S=' num2str(s) 'Z=' num2str(z) ...
 
 load(filename);
 
+close all;
+
 %% find violations by EU regulation
 % [bus, time] = find(V_loads < V_lim_eu);
-% 
+%
 % [~, temp] = min(bus);
-% 
+%
 % V_data = V_loads(:,time(temp));
-% 
+%
 % plot_data = [load_buses_distance V_data];
 % figure
 % plot (plot_data(:,2), plot_data(:,end), '.');
@@ -31,7 +33,7 @@ load(filename);
 %     ', XR=' num2str(xr) ' fist viol. bus ' num2str(plot_data((min(bus)),1))]);
 % xlabel('Distance from substation [m]');
 % ylabel('Voltage [V]');
-% 
+%
 % % plot by impedance distance
 % figure
 % plot (plot_data(:,4), plot_data(:,end), '.');
@@ -43,45 +45,51 @@ load(filename);
 % ylabel('Voltage [V]');
 
 %% find violation by UK regulation
-[bus, time] = find(V_loads < V_lim_uk);
-
-[~, temp] = min(bus);
-
-V_data = V_loads(:,time(temp));
-
-plot_data = [load_buses_distance V_data];
-figure
-plot (plot_data(:,2), plot_data(:,end), '.');
-hold on;
-plot (plot_data(:,2), ones(size(plot_data,1))*V_lim_uk, 'r');
-title(['Worst violations by UK regulations, S = ' num2str(s) ', Z=' num2str(z) ...
-    ', XR=' num2str(xr) ' fist viol. bus ' num2str(plot_data(min(bus),1))]);
-xlabel('Distance from substation [m]');
-ylabel('Voltage [V]');
-
-% plot by impedance distance
-% figure
-% plot (plot_data(:,4), plot_data(:,end), '.');
-% hold on;
-% plot (plot_data(:,4), ones(size(plot_data,1))*V_lim_uk, 'r');
-% title(['Worst violation by UK regulations, S=' num2str(s) ', Z=' num2str(z) ...
-%     ', XR=' num2str(xr) ' fist viol. bus ' num2str(plot_data((min(bus)),1))]);
-% xlabel('Total cable impedance [\Omega]');
-% ylabel('Voltage [V]');
-
-%% theoretical voltage drop
-% calculate average Z of the line
-Z_tot = sum(abs(lines_EU.R1 .* lines_EU.Length + 1i .* lines_EU.X1 .* lines_EU.Length));
-length = sum(lines_EU.Length);
-Z = Z_tot/length
-Z = Z/Z_base
-
-I_t = PGEN(907,temp);
-L = max(load_buses_distance(:,2));
-x = 0:0.1:L;
-emp_factor = 3e-3;
-
-V_x = VOLT(1,temp) - emp_factor*(Z*I_t*(x - x.^2/(2*L)));
-V_x = V_x * V_base;
-
-plot (x, V_x, 'g');
+% [bus, time] = find(V_loads < V_lim_uk);
+%
+% [~, temp] = min(bus);
+I_all = []
+for iterator = 1:100:1440
+    V_data = V_loads(:,time(iterator));
+    
+    plot_data = [load_buses_distance V_data];
+    figure
+    plot (plot_data(:,2), plot_data(:,end), '.');
+    hold on;
+    plot (plot_data(:,2), ones(size(plot_data,1))*V_lim_uk, 'r');
+    title(['Worst violations by UK regulations, S = ' num2str(s) ', Z=' num2str(z) ...
+        ', XR=' num2str(xr) ' time ' num2str(iterator)]);
+    xlabel('Distance from substation [m]');
+    ylabel('Voltage [V]');
+    
+    % plot by impedance distance
+    % figure
+    % plot (plot_data(:,4), plot_data(:,end), '.');
+    % hold on;
+    % plot (plot_data(:,4), ones(size(plot_data,1))*V_lim_uk, 'r');
+    % title(['Worst violation by UK regulations, S=' num2str(s) ', Z=' num2str(z) ...
+    %     ', XR=' num2str(xr) ' fist viol. bus ' num2str(plot_data((min(bus)),1))]);
+    % xlabel('Total cable impedance [\Omega]');
+    % ylabel('Voltage [V]');
+    
+    %% theoretical voltage drop
+    Z_tot = sum(abs(lines_EU.R1 .* lines_EU.Length + 1i .* lines_EU.X1 .* lines_EU.Length));
+    length = sum(lines_EU.Length);
+    Z = Z_tot/length/1e3;
+    Z = Z/Z_base;
+    
+    I_t = PGEN(907,iterator);
+    I_all = [I_all I_t];
+    L = max(load_buses_distance(:,2));
+    x = 0:0.1:L;
+    
+%     V_x = VOLT(1,iterator) - (Z*I_t*(x - x.^2/(2*L)));
+%     plot_data(end,end)
+%     V_x(end) * V_base
+    emp_factor = sqrt(I_t);
+    
+    V_x = VOLT(1,iterator) - emp_factor * (Z*I_t*(x - x.^2/(2*L)));
+    V_x = V_x * V_base;
+    
+    plot (x, V_x, 'g');
+end
