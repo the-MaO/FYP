@@ -2,6 +2,8 @@
 s = 1.6;
 xr = 1;
 z = 1;
+emp_factor = 3
+
 
 V_lim_eu = 240 * 0.9;
 V_lim_uk = 240 * 0.94;
@@ -45,10 +47,10 @@ close all;
 % ylabel('Voltage [V]');
 
 %% find violation by UK regulation
-% [bus, time] = find(V_loads < V_lim_uk);
-%
-% [~, temp] = min(bus);
-I_all = []
+[bus, time] = find(V_loads < V_lim_uk);
+
+[~, iterator] = min(bus);
+I_all = [];
 for iterator = 1:100:1440
     V_data = V_loads(:,time(iterator));
     
@@ -78,7 +80,8 @@ for iterator = 1:100:1440
     Z = Z_tot/length/1e3;
     Z = Z/Z_base;
     
-    I_t = PGEN(907,iterator);
+    I_t = PGEN(907,iterator)
+    I_t_alt = sum(PLOAD(:,iterator)./VOLT(:,iterator));
     I_all = [I_all I_t];
     L = max(load_buses_distance(:,2));
     x = 0:0.1:L;
@@ -86,9 +89,8 @@ for iterator = 1:100:1440
 %     V_x = VOLT(1,iterator) - (Z*I_t*(x - x.^2/(2*L)));
 %     plot_data(end,end)
 %     V_x(end) * V_base
-    emp_factor = sqrt(I_t);
     
-    V_x = VOLT(1,iterator) - emp_factor * (Z*I_t*(x - x.^2/(2*L)));
+    V_x = VOLT(7,iterator) - emp_factor * (Z*I_t_alt*(x - x.^2/(2*L)));
     V_x = V_x * V_base;
     
     plot (x, V_x, 'g');
