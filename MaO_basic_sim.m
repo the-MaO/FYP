@@ -17,11 +17,11 @@ S_base = 1e3;
 Z_base = V_base^2/S_base;
 V_src = 1;
 
-% phase_sel = 'A';
-loads.phases(:) = {'A'};
+phase_sel = 'A';
+% loads.phases(:) = {'A'};
 
 % load multiplier for changing load magnitude
-S_mltp = 1.6;
+S_mltp = 2.5;
 % impedance multiplier for changing line impedance
 Z_mltp = 1;
 % X:R ratio multiplier for changing line X:R ratio (multiply only R, hence
@@ -67,6 +67,9 @@ else
     load_indx = loads.Bus;
 end
 
+%% calculate MFC taps
+MaO_MFC_compensation
+
 %% call script to run simulation and save data
 
 % vary Z, S and X:R multipliers
@@ -86,3 +89,11 @@ end
 %         end
 %     end
 % end
+
+%% post simulation analysis
+V_lim_uk_b = V_base*0.94;
+V_lim_uk_t = V_base*1.1;
+
+violations = V_loads < V_lim_uk_b | V_loads > V_lim_uk_t;
+[row, col] = find(violations);
+plot(VOLT(906,:));

@@ -13,6 +13,13 @@ for time=1:1440
         curr_load = curr_load + 1;
     end
     
+    % --------------set MFC tap ratio--------------------
+    bus1 = 878;                 % buses found manually from MFC calculations
+    bus2 = 884;
+    mfc_line = find(lines(:,1) == bus1 & lines(:,2) == bus2);
+    lines(mfc_line, 6) = MFC(time);
+    % ---------------------------------------------------
+    
     % loadflow(bus,line,tol,iter_max,acc,display,flag)
     [bus_sol,line_sol,line_flow] = loadflow(bus,lines,1e-5,30,1,'n',1);
     
@@ -26,20 +33,22 @@ for time=1:1440
     
     PLINE(:,time) = line_flow(:,4);
     QLINE(:,time) = line_flow(:,5);
+    
+    time
 end
 
 beep;
 %% extract, save and plot data
 % get data at load locations
-V_loads = VOLT(load_indx,:) .* V_base;
-V_ang_loads = VOLT_ang(load_indx,:) .* V_base;
+V_loads = VOLT(load_indx,:);
+V_ang_loads = VOLT_ang(load_indx,:);
 P_loads = PLOAD(load_indx,:) .* S_base;
 Q_loads = QLOAD(load_indx,:) .* S_base;
 
 filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
     'XR=' num2str(XR_mltp)];
 
-save ([filename '.mat'], 'V_loads', 'V_ang_loads', 'P_loads', 'Q_loads', 'PGEN')
+save ([filename '.mat'], 'VOLT', 'PLOAD', 'QLOAD', 'PGEN')
 
 figure
 mesh(V_loads)
@@ -48,4 +57,4 @@ ylabel('load no.');
 zlabel('voltage [V]');
 title(filename);
 savefig([filename '.fig']);
-close all;
+% close all;

@@ -22,7 +22,9 @@ MFC(944:1023,1) = MFC(944:1023,1)-.02;
 MFC(1023:1160,1) =  MFC(1023:1160,1) -.035;
 MFC(1160:1167,1) =  MFC(1160:1167,1) -.035;
 
-
+plot(MFC)
+hold on
+plot(P_normal)
 clearvars -except TAP MFC;
 
 
