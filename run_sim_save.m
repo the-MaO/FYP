@@ -48,6 +48,14 @@ Q_loads = QLOAD(load_indx,:) .* S_base;
 filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
     'XR=' num2str(XR_mltp)];
 
+% %---save uncompensated values----
+% S.('uncVOLT') = VOLT;
+% S.('uncPLOAD') = PLOAD;
+% S.('uncQLOAD') = QLOAD;
+% S.('uncPGEN') = PGEN;
+% save(['unc' filename '.mat'], '-struct', 'S');
+% %------------------------------
+
 save ([filename '.mat'], 'VOLT', 'PLOAD', 'QLOAD', 'PGEN')
 
 figure
@@ -56,5 +64,3 @@ xlabel('time [min]');
 ylabel('load no.');
 zlabel('voltage [V]');
 title(filename);
-savefig([filename '.fig']);
-% close all;

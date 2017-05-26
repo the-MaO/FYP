@@ -94,6 +94,22 @@ MaO_MFC_compensation
 V_lim_uk_b = V_base*0.94;
 V_lim_uk_t = V_base*1.1;
 
-violations = V_loads < V_lim_uk_b | V_loads > V_lim_uk_t;
-[row, col] = find(violations);
-plot(VOLT(906,:));
+% plot voltages of affected load buses pre and post MFC
+% find number of affected buses - search from end of feeder
+i = size(load_indx,1);
+numCompBus = 0;
+while load_indx(i) > bus2
+    numCompBus = numCompBus + 1;
+    i = i-1;
+end
+
+load(['unc' filename '.mat']);
+% plot profiles
+for i=1:numCompBus
+    figure;
+    plot(VOLT(load_indx(end-i+1),:));
+    hold on;
+    plot(uncVOLT(load_indx(end-i+1),:));
+    legend('with MFC','without MFC');
+    title(num2str((load_indx(end-i+1))));
+end
