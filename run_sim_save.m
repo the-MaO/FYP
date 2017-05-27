@@ -14,8 +14,8 @@ for time=1:1440
     end
     
     % --------------set MFC tap ratio--------------------
-    bus1 = 878;                 % buses found manually from MFC calculations
-    bus2 = 884;
+    bus1 = 272;                 % buses found manually from MFC calculations
+    bus2 = 280;
     mfc_line = find(lines(:,1) == bus1 & lines(:,2) == bus2);
     lines(mfc_line, 6) = MFC(time);
     % ---------------------------------------------------

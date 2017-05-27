@@ -21,7 +21,7 @@ phase_sel = 'A';
 % loads.phases(:) = {'A'};
 
 % load multiplier for changing load magnitude
-S_mltp = 2.5;
+S_mltp = 3;
 % impedance multiplier for changing line impedance
 Z_mltp = 1;
 % X:R ratio multiplier for changing line X:R ratio (multiply only R, hence
@@ -103,13 +103,28 @@ while load_indx(i) > bus2
     i = i-1;
 end
 
+savefolder = 's=3_mfc_at_Y_from_last_bus_basic';
+mkdir([pwd '/' savefolder]);
+save (['./' savefolder '/' filename '.mat'], 'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
+
 load(['unc' filename '.mat']);
 % plot profiles
 for i=1:numCompBus
     figure;
+    
     plot(VOLT(load_indx(end-i+1),:));
     hold on;
     plot(uncVOLT(load_indx(end-i+1),:));
+    hline(0.94);
     legend('with MFC','without MFC');
-    title(num2str((load_indx(end-i+1))));
+    tit = num2str((load_indx(end-i+1)));
+    title(tit);
+    grid on;
+    savefig(['./' savefolder '/' tit '.fig']);
 end
+
+ploting_netwrok_Updated
+savefig(['./' savefolder '/map.fig']);
+
+% calculate power saving in percent
+(sum(sum(uncPGEN))-sum(sum(PGEN)))/(sum(sum(uncPGEN)))*100
