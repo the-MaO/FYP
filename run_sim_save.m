@@ -10,6 +10,11 @@ for time=1:1440
         bus(indx,6) = S_mltp * P0h(curr_load,time) / S_base;
         bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
         
+        %----------- for PoLC------------------
+        bus(indx,6) = S_mltp * P0h_polc(curr_load,time) / S_base;
+        bus(indx,7) = S_mltp * Q0h_polc(curr_load,time) / S_base;
+        %-----------------------------
+        
         curr_load = curr_load + 1;
     end
     

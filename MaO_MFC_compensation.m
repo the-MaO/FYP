@@ -18,10 +18,10 @@ min(row)
 % P_norm = (P_net - min(P_net))./(max(P_net) - min(P_net));
 % MFC = P_norm * 0.15 + 0.94;
 
-% MFC from last load bus voltage
-last_bus = load_indx(end);
-MFC = uncVOLT(last_bus,:);
-MFC(MFC<0.96) = 0.96;
+% % MFC from last load bus voltage
+% last_bus = load_indx(end);
+% MFC = uncVOLT(last_bus,:);
+% MFC(MFC<0.96) = 0.96;
 
 % mfc from last load bus voltage, DSM
 % last_bus = load_indx(end);
@@ -33,13 +33,11 @@ MFC(MFC<0.96) = 0.96;
 % MFC(MFC<0.94) = 0.97;
 
 % MFC from flow at it
-% MFC = uncVOLT(272,:);         % MFC upstream bus
-% MFC(MFC>0.99) = 1.04;
-% MFC(MFC>0.97&MFC<1.04) = 1.01;
-% MFC(MFC>0.95&MFC<1.01) = 0.98;
-% MFC(MFC<0.95) = 0.97;
-
-
+MFC = uncVOLT(272,:);         % MFC upstream bus
+MFC(MFC>0.99) = 1.04;
+MFC(MFC>0.97&MFC<1.04) = 1.01;
+MFC(MFC>0.95&MFC<1.01) = 0.98;
+MFC(MFC<0.95) = 0.97;
 
 figure
 plot(MFC);

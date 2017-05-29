@@ -67,7 +67,7 @@ else
     load_indx = loads.Bus;
 end
 
-%% calculate MFC taps
+%% calculate MFC taps or PoLC flow
 MaO_MFC_compensation
 
 %% call script to run simulation and save data
