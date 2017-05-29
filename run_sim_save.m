@@ -64,8 +64,11 @@ filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
 save ([filename '.mat'], 'VOLT', 'PLOAD', 'QLOAD', 'PGEN')
 
 figure
-mesh(V_loads)
-xlabel('time [min]');
-ylabel('load no.');
-zlabel('voltage [V]');
+boxplot(V_loads','Labels',num2cell(load_indx))
+xlabel('load bus number');
+ylabel('voltage p.u.');
 title(filename);
+plot(xlim,[0.94 0.94],'g');
+plot(xlim,[1.1 1.1],'g');
+ylim([0.94 1.1])
+

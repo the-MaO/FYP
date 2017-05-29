@@ -69,6 +69,7 @@ end
 
 %% calculate MFC taps or PoLC flow
 MaO_MFC_compensation
+MaO_PoLC_compensation
 
 %% call script to run simulation and save data
 
@@ -91,40 +92,54 @@ MaO_MFC_compensation
 % end
 
 %% post simulation analysis
-V_lim_uk_b = V_base*0.94;
-V_lim_uk_t = V_base*1.1;
+V_lim_uk_b = 0.94;
+V_lim_uk_t = 1.1;
 
-% plot voltages of affected load buses pre and post MFC
-% find number of affected buses - search from end of feeder
-i = size(load_indx,1);
-numCompBus = 0;
-while load_indx(i) > bus2
-    numCompBus = numCompBus + 1;
-    i = i-1;
-end
-
+%------------------save simulation data --------------------------
 savefolder = 's=3_mfc_at_Y_from_last_bus_basic';
 mkdir([pwd '/' savefolder]);
-save (['./' savefolder '/' filename '.mat'], 'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
+save (['./' savefolder '/' filename '.mat'],...
+    'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
 
 load(['unc' filename '.mat']);
-% plot profiles
-for i=1:numCompBus
-    figure;
-    
-    plot(VOLT(load_indx(end-i+1),:));
-    hold on;
-    plot(uncVOLT(load_indx(end-i+1),:));
-    hline(0.94);
-    legend('with MFC','without MFC');
-    tit = num2str((load_indx(end-i+1)));
-    title(tit);
-    grid on;
-    savefig(['./' savefolder '/' tit '.fig']);
-end
+% ----------------------plot uncompensated voltages--------------------
+figure
+% MFC
+boxplot(uncVOLT(mfc_load_buses,:)','Labels', num2cell(mfc_load_buses))
+% PoLC
+boxplot(uncVOLT(viol_load_buses(:,1),:)', ...
+    'Labels',num2cell(viol_load_buses(:,1)));
+%---
+xlabel('load bus number');
+ylabel('voltage p.u.');
+hold on
+plot(xlim,[0.94 0.94],'g');
+plot(xlim,[1.1 1.1],'g');
+% ylim([0.935 1.105])
+grid on
+
+%-------------------------plot compensated voltages -----------------------
+figure
+% MFC
+boxplot(VOLT(mfc_load_buses,:)','Labels', num2cell(mfc_load_buses))
+% PoLC
+boxplot(V_comp', 'Labels',num2cell(viol_load_buses(:,1)));
+%---
+xlabel('load bus number');
+ylabel('voltage p.u.');
+hold on
+plot(xlim,[0.94 0.94],'g');
+plot(xlim,[1.1 1.1],'g');
+% ylim([0.935 1.105])
+grid on
 
 ploting_netwrok_Updated
 savefig(['./' savefolder '/map.fig']);
 
-% calculate power saving in percent
-(sum(sum(uncPGEN))-sum(sum(PGEN)))/(sum(sum(uncPGEN)))*100
+% -----------------calculate power saving in percent-------------
+total_power_saving = (sum(sum(uncPGEN))-sum(sum(PGEN)))/(sum(sum(uncPGEN)))*100
+
+%-----------calculate MFC (connected at line 279) rating----------------
+S_mfc = sqrt(PLINE(279,:).^2 + QLINE(279,:).^2)
+I_mfc = S_mfc*S_base./(VOLT(272,:) * V_base)
+mfc_rating = max(I_mfc * range(MFC) * V_base)

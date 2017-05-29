@@ -4,9 +4,11 @@ filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
 load (['unc' filename '.mat']);
 V_lim_uk = 0.94;
 violations = uncVOLT < V_lim_uk;
-[row, ~] = find(violations);
-row = unique(row);
-min(row)
+[viol_buses, ~] = find(violations);
+viol_buses = unique(viol_buses);
+min(viol_buses)
+mfc_load_buses = intersect(viol_buses, load_indx)
+mfc_load_buses = sort([mfc_load_buses; 388; 349])
 
 %% now manually find the bus in the main path to connect the MFC to
 % first_bus = 178 -> plug it between 148 and 155
