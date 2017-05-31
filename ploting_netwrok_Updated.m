@@ -82,10 +82,10 @@ end
 % text(nodes_EU.x(bus2)+1,nodes_EU.y(bus2)+1,'MFC', 'FontSize', ftax);
 
 % violated nodes numbers
-for i=1:size(row,1)
-    text(nodes_EU.x(row(i)) ,nodes_EU.y(row(i)), ...
-        'O', 'FontSize', ftax, 'Color', 'blue');
-end
+% for i=1:size(row,1)
+%     text(nodes_EU.x(row(i)) ,nodes_EU.y(row(i)), ...
+%         'O', 'FontSize', ftax, 'Color', 'blue');
+% end
 
 % last common branch nodes
 text(nodes_EU.x(272)+1 ,nodes_EU.y(272)+1, ...

@@ -43,6 +43,7 @@ MFC(MFC<0.95) = 0.97;
 
 figure
 plot(MFC);
-hold on
-plot(uncVOLT(last_bus,:));
-legend('mfc','load');
+title('MFC taps')
+% hold on
+% plot(uncVOLT(last_bus,:));
+% legend('mfc','load');

@@ -59,4 +59,5 @@ I_polc = S_comp(viol_load_buses(:,2),:)./(V_base.*V_comp);
 S_polc = abs(2*V_base*polc_rating*I_polc);
 figure
 boxplot(S_polc')
+title('PoLC power in W');
 total_polc_rating = sum(max(S_polc,[],2))
