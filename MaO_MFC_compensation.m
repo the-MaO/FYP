@@ -1,14 +1,17 @@
 %% find earliest load bus where violation occurs
-filename = [load_profile 'S=' num2str(S_mltp) 'Z=' num2str(Z_mltp) ...
-    'XR=' num2str(XR_mltp)];
-load (['unc' filename '.mat']);
-V_lim_uk = 0.94;
-violations = uncVOLT < V_lim_uk;
-[viol_buses, ~] = find(violations);
-viol_buses = unique(viol_buses);
-min(viol_buses)
-mfc_load_buses = intersect(viol_buses, load_indx)
-mfc_load_buses = sort([mfc_load_buses; 388; 349])
+uncfolder = 'EVOpWinter';
+
+filename = [load_profile ' S=' num2str(S_mltp) ''];
+
+load (['./' uncfolder '/unc' filename '.mat']);
+% V_lim_uk = 0.94;
+% violations = uncVOLT < V_lim_uk;
+% [viol_buses, ~] = find(violations);
+% viol_buses = unique(viol_buses);
+% min(viol_buses)
+% mfc_load_buses = intersect(viol_buses, load_indx)
+% mfc_load_buses = sort([mfc_load_buses; 388; 349])
+mfc_load_buses = [349;388;502;562;563;611;629;817;860;861;896;898;900;906];
 
 %% now manually find the bus in the main path to connect the MFC to
 % first_bus = 178 -> plug it between 148 and 155
@@ -35,15 +38,35 @@ mfc_load_buses = sort([mfc_load_buses; 388; 349])
 % MFC(MFC<0.94) = 0.97;
 
 % MFC from flow at it
+% MFC = uncVOLT(272,:);         % MFC upstream bus
+% MFC(MFC>0.99) = 1.04;
+% MFC(MFC>0.97&MFC<1.04) = 1.01;
+% MFC(MFC>0.95&MFC<1.01) = 0.98;
+% MFC(MFC<0.95) = 0.97;
+
+% MFC from flow at it, no DSM
+% MFC = uncVOLT(272,:);         % MFC upstream bus
+% MFC(MFC>1.04) = 1.04;
+% MFC(MFC<0.96) = 0.96;
+
+% MFC from flow at it, non-discrete DSM
 MFC = uncVOLT(272,:);         % MFC upstream bus
-MFC(MFC>0.99) = 1.04;
-MFC(MFC>0.97&MFC<1.04) = 1.01;
-MFC(MFC>0.95&MFC<1.01) = 0.98;
-MFC(MFC<0.95) = 0.97;
+MFC = MFC + 0.03;
+MFC(MFC>1.04) = 1.04;
+MFC(MFC<0.96) = 0.96;
+
 
 figure
+yyaxis left
 plot(MFC);
 title('MFC taps')
-% hold on
-% plot(uncVOLT(last_bus,:));
-% legend('mfc','load');
+hold on
+yyaxis right
+plot(uncVOLT(272,:));
+legend('MFC taps','bus 272');
+xlabel('time [min]')
+ylabel('voltage [p.u.]');
+yyaxis left
+ylabel('tap ratio');
+% ylim([0.955 1.045])
+grid on

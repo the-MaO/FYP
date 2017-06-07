@@ -62,7 +62,7 @@ for ii=1:1:size(Lines_EU,1)
     plot(XX,YY, '-k', 'LineWidth', lw);
     hold on
 end
-text(nodes_EU.x(1)+2 ,nodes_EU.y(1)+7,'Substation', 'FontSize', ftax);
+text(nodes_EU.x(1)+1 ,nodes_EU.y(1)+1,'Substation', 'FontSize', ftax);
 
 set(gca, 'XTick', [], 'YTick', []);
 

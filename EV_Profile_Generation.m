@@ -43,4 +43,5 @@ EV(t0:1440) = 500;
 EV = smooth(EV,20);
 EV = smooth(EV, 30);
 EV = 4.0*EV';
+figure
 plot(0:(24/1440):23.99, EV)

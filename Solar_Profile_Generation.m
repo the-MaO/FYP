@@ -18,4 +18,4 @@ for ii = 1:1:1440;
 end
 
 SUN = 3.5*SUN;
-plot(SUN_f)
+plot(SUN)

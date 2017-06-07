@@ -14,7 +14,7 @@ s8 = min(find(strcmp('01/01/2005',b(:,1))));
 %% average the years together
 solar_avg = a(s1:s2-1,6) +a(s2:s3-1,6)+a(s3:s4-25,6)+a(s4:s5-1,6)+a(s5:s6-1,6)+a(s6:s7-1,6)+a(s7:s8-25,6)+a(s8-1:end,6);
 solar_avg = solar_avg / 8;
-plot(solar_avg)
+% plot(solar_avg)
 
 %% average winter data over 20 days
 solar_winter_day = zeros(24,1);
@@ -30,11 +30,12 @@ solar_fit = fit([1:24]', solar_winter_day, 'gauss2');
 for i=1:1:1440
     solar_winter_day(i) = solar_fit(i/60);
 end
-min(solar_winter_day)
-figure
-plot(solar_winter_day)
-title('winter solar power');
-grid on
+% min(solar_winter_day)
+% figure
+% plot(0:1/60:24-1/60, solar_winter_day, 'LineWidth', 2)
+% title('PV output power');
+% hold on
+% grid on
 
 %% average summer data over 20 days
 solar_summer_day = zeros(24,1);
@@ -50,10 +51,15 @@ solar_fit = fit([1:24]', solar_summer_day, 'gauss2');
 for i=1:1:1440
     solar_summer_day(i) = solar_fit(i/60);
 end
-min(solar_summer_day)
-figure
-plot(solar_summer_day)
-title('summer solar power');
-grid on;
+% min(solar_summer_day)
+% figure
+% plot(0:1/60:24-1/60,solar_summer_day, 'LineWidth', 2)
+% % title('summer solar power');
+% % grid on;
+% xlabel('time [h]');
+% ylabel('power [W]');
+% legend('winter', 'summer');
 
+sum(solar_summer_day)
+sum(solar_winter_day)
     
