@@ -1,9 +1,4 @@
 %% find earliest load bus where violation occurs
-uncfolder = 'EVOpWinter';
-
-filename = [load_profile ' S=' num2str(S_mltp) ''];
-
-load (['./' uncfolder '/unc' filename '.mat']);
 % V_lim_uk = 0.94;
 % violations = uncVOLT < V_lim_uk;
 % [viol_buses, ~] = find(violations);
@@ -45,15 +40,15 @@ mfc_load_buses = [349;388;502;562;563;611;629;817;860;861;896;898;900;906];
 % MFC(MFC<0.95) = 0.97;
 
 % MFC from flow at it, no DSM
-% MFC = uncVOLT(272,:);         % MFC upstream bus
-% MFC(MFC>1.04) = 1.04;
-% MFC(MFC<0.96) = 0.96;
+MFC = uncVOLT(272,:);         % MFC upstream bus
+MFC(MFC>1.05) = 1.05;
+MFC(MFC<0.95) = 0.95;
 
 % MFC from flow at it, non-discrete DSM
-MFC = uncVOLT(272,:);         % MFC upstream bus
-MFC = MFC + 0.03;
-MFC(MFC>1.04) = 1.04;
-MFC(MFC<0.96) = 0.96;
+% MFC = uncVOLT(272,:);         % MFC upstream bus
+% MFC = MFC + 0.04;
+% MFC(MFC>1.05) = 1.05;
+% MFC(MFC<0.95) = 0.95;
 
 
 figure

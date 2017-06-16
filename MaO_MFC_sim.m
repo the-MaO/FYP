@@ -1,4 +1,5 @@
 %% get ready
+tic
 clear all;
 clc
 close all;
@@ -13,6 +14,7 @@ load('Load_Profiles_CRES/PQnpnq_winter_we.mat');
 load_profile = 'winter weekend';
 % load('Load_Profiles_CRES/PQnpnq_summer_wd.mat');
 % load_profile = 'summer weekday';
+
 
 V_base = 230;
 S_base = 1e3;
@@ -29,6 +31,12 @@ Z_mltp = 1;
 % X:R ratio multiplier for changing line X:R ratio (multiply only R, hence
 % ratio changes
 XR_mltp = 1;
+
+uncfolder = 'PVEVOpWinter';
+filename = [load_profile ' S=' num2str(S_mltp) ''];
+load([uncfolder '/unc' filename '.mat']);
+savefolder = 'PVEVOpWinter/mfc_new';
+
 
 %% define lines
 % --- format ---
@@ -71,7 +79,7 @@ end
 
 %% calculate MFC taps
 
-% MaO_solar
+load solar.mat
 MaO_ev
 MaO_MFC_compensation
 
@@ -88,7 +96,7 @@ for time=1:1440
 %         bus(indx,6) = S_mltp * P0h(curr_load,time) / S_base;
 %         bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
         % ------------------------add PV
-%         bus(indx,6) = (P0h(curr_load,time) - 2*solar_winter_day(time)) / S_base;
+%         bus(indx,6) = (P0h(curr_load,time) - 8*solar_summer_day(time)) / S_base;
 %         bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
         % ----------------------add EVs to every second house
 %         if (mod(j,2) == 0)
@@ -107,22 +115,22 @@ for time=1:1440
 %             end
 %         end
         % ---------------------PV and EV
-%         if (mod(j,2) == 0)
-%             bus(indx,6) = S_mltp * (P0h(curr_load,time)- 2*solar_winter_day(time)) / S_base;
-%             bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
-%         else
-%             if (mod(j,6) == 1)
-%                 bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape1(time)- 2*solar_winter_day(time)) / S_base;
-%                 bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
-%             elseif(mod(j,6) == 3)
-%                 bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape2(time)- 2*solar_winter_day(time)) / S_base;
-%                 bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
-%             else
-%                 bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape3(time)- 2*solar_winter_day(time)) / S_base;
-%                 bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
-%             end
-%         end
-        
+        if (mod(j,2) == 0)
+            bus(indx,6) = S_mltp * (P0h(curr_load,time)- 8*solar_winter_day(time)) / S_base;
+            bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+        else
+            if (mod(j,6) == 1)
+                bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape1(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            elseif(mod(j,6) == 3)
+                bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape2(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            else
+                bus(indx,6) = S_mltp * (P0h(curr_load,time) + ev_shape3(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            end
+        end
+%         
         curr_load = curr_load + 1;
     end
     
@@ -153,27 +161,110 @@ end
 beep;
 
 %% recalculate power to compensated loads
+comp_load_buses = [349,7;388,9;502,10;562,11;563,12;611,13;629,14;817,15;860,16;861,17;896,18;898,19;900,20;906,21];
+num_of_loads = length(load_indx);
 
+P0h_mfc = P0h(1:num_of_loads,:);
+Q0h_mfc = Q0h(1:num_of_loads,:);
+
+for i=1:size(comp_load_buses,1)
+    P0h_mfc(comp_load_buses(i,2),:) = P0h_mfc(comp_load_buses(i,2),:) .* ...
+        (VOLT(comp_load_buses(i,1),:) ./ uncVOLT(comp_load_buses(i,1),:)) .^(npt(comp_load_buses(i,2),:));
+    Q0h_mfc(comp_load_buses(i,2),:) = Q0h_mfc(comp_load_buses(i,2),:) .* ...
+        (VOLT(comp_load_buses(i,1),:) ./ uncVOLT(comp_load_buses(i,1),:)).^(nqt(comp_load_buses(i,2)));
+end
+
+%% re-run the simulation with new load values
+for time=1:1440
+    
+    curr_load = 1;
+    
+    % assign load to load buses for this time instant
+    for j=1:length(load_indx)
+        indx = find(bus(:,1) == load_indx(j));
+        
+        % -----------------normal operation
+%         bus(indx,6) = S_mltp * P0h_mfc(curr_load,time) / S_base;
+%         bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+        % ------------------------add PV
+%         bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) - 8*solar_summer_day(time)) / S_base;
+%         bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+        % ----------------------add EVs to every second house
+%         if (mod(j,2) == 0)
+%             bus(indx,6) = S_mltp * P0h_mfc(curr_load,time) / S_base;
+%             bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+%         else
+%             if (mod(j,6) == 1)
+%                 bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape1(time)) / S_base;
+%                 bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+%             elseif(mod(j,6) == 3)
+%                 bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape2(time)) / S_base;
+%                 bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+%             else
+%                 bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape3(time)) / S_base;
+%                 bus(indx,7) = S_mltp * Q0h_mfc(curr_load,time) / S_base;
+%             end
+%         end
+        % ---------------------PV and EV
+        if (mod(j,2) == 0)
+            bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time)- 8*solar_winter_day(time)) / S_base;
+            bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+        else
+            if (mod(j,6) == 1)
+                bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape1(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            elseif(mod(j,6) == 3)
+                bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape2(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            else
+                bus(indx,6) = (S_mltp * P0h_mfc(curr_load,time) + ev_shape3(time)- 8*solar_winter_day(time)) / S_base;
+                bus(indx,7) = S_mltp * Q0h(curr_load,time) / S_base;
+            end
+        end
+%         
+        curr_load = curr_load + 1;
+    end
+    
+    % --------------set MFC tap ratio--------------------
+        bus1 = 272;                 % buses found manually from MFC calculations
+        bus2 = 280;
+        mfc_line = find(lines(:,1) == bus1 & lines(:,2) == bus2);
+        lines(mfc_line, 6) = MFC(time);
+    % ---------------------------------------------------
+    
+    % loadflow(bus,line,tol,iter_max,acc,display,flag)
+    [bus_sol,line_sol,line_flow] = loadflow(bus,lines,1e-5,30,1,'n',1);
+    
+    VOLT(:,time) = bus_sol(:,2);
+    VOLT_ang(:,time)  = bus_sol(:,3);
+    
+    PGEN(:,time) = bus_sol(:,4);
+    QGEN(:,time) = bus_sol(:,5);
+    PLOAD(:,time) = bus_sol(:,6);
+    QLOAD(:,time) = bus_sol(:,7);
+    
+    PLINE(:,time) = line_flow(:,4);
+    QLINE(:,time) = line_flow(:,5);
+    
+    time
+end
+
+beep;
 
 %% post simulation analysis
 V_lim_uk_b = 0.94;
 V_lim_uk_t = 1.1;
 
 %------------------save simulation data --------------------------
-savefolder = 'NormalOpWinter/polc_DSM';
-uncfolder = 'NormalOpWinter';
 
 mkdir([pwd '/' savefolder]);
 save (['./' savefolder '/' filename '.mat'],...
     'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
 
-load([uncfolder '/unc' filename '.mat']);
 % ----------------------plot uncompensated voltages--------------------
 figure
 % MFC
-% boxplot(uncVOLT(load_indx,:)','Labels', num2cell(load_indx))
-% PoLC
-boxplot(uncVOLT(load_indx,:)','Labels',num2cell(load_indx));
+boxplot(uncVOLT(load_indx,:)','Labels', num2cell(load_indx))
 %---
 xlabel('load bus number');
 ylabel('voltage p.u.');
@@ -188,9 +279,7 @@ savefig(['./' savefolder '/uncVoltages.fig']);
 %-------------------------plot compensated voltages -----------------------
 figure
 % MFC
-% boxplot(VOLT(load_indx,:)','Labels', num2cell(load_indx))
-% PoLC
-boxplot(V_comp', 'Labels',num2cell(comp_load_buses(:,1)), 'Symbol', 'r+');
+boxplot(VOLT(load_indx,:)','Labels', num2cell(load_indx))
 %---
 xlabel('load bus number');
 ylabel('voltage p.u.');
@@ -207,8 +296,7 @@ savefig(['./' savefolder '/voltages.fig']);
 
 %---------------plot bus 906 voltage for optical check
 figure
-% plot(VOLT(906,:))           %MFC
-plot(V_comp(end,:))         %PoLC
+plot(VOLT(906,:))           %MFC
 hold on
 plot(uncVOLT(906,:))
 grid on
@@ -221,15 +309,14 @@ savefig(['./' savefolder '/bus906.fig']);
 total_power_saving = (sum(sum(uncPGEN))-sum(sum(PGEN)))/(sum(sum(uncPGEN)))*100
 
 %-----------calculate MFC (connected at line 279) rating----------------
-% S_mfc = sqrt(PLINE(279,:).^2 + QLINE(279,:).^2)
-% I_mfc = S_mfc*S_base./(VOLT(272,:) * V_base)
-% mfc_rating = max(I_mfc * range(MFC) * V_base)
+S_mfc = sqrt(PLINE(279,:).^2 + QLINE(279,:).^2)
+I_mfc = S_mfc*S_base./(VOLT(272,:) * V_base)
+mfc_rating = max(I_mfc * range(MFC) * V_base)
 
 %----------------calculate losses----------------------------------------
 comp_loss = (sum(sum(PGEN)) - sum(sum(PLOAD)))/sum(sum(PGEN))*100
 device_loss_pc = 0.02;
-% device_loss = (mfc_rating * device_loss_pc)/sum(sum(PGEN)) * 100
-device_loss = (total_polc_rating * device_loss_pc)/sum(sum(PGEN)) * 100
+device_loss = (mfc_rating * device_loss_pc)/sum(sum(PGEN)) * 100
 total_loss = comp_loss + device_loss
 
 %--------------plot total power flow in/out of the feeder---------------
@@ -263,34 +350,23 @@ savefig(['./' savefolder '/uncpowerflow.fig']);
 
 figure
 plot(0:1/60:24-1/60,uncPGEN(907,:)-PGEN(907,:));
-hold on
-plot(0:1/60:24-1/60,sum(uncPLOAD,1)-sum(PLOAD,1));
 xlabel('time [hr]');
 ylabel('power [kW]');
-legend('power from substation','power to all loads');
 title('power flow difference (uncompensated - compensated)')
 grid on
 savefig(['./' savefolder '/powerflowdiff.fig']);
 
-
-
 %----------------write metrics into text file----------------------
 fileId = fopen(['./' savefolder '/resultsmfc.txt'], 'w');
-% desc_txt = ['MFC before fork, tap calculated from flow at MFC bus\r\n' ...
-%     'mfc setpoint flow, rating +-4%%\r\n'];
-desc_txt = 'PoLC setpoint 1, rating 0.04\r\n';
+desc_txt = ['MFC before fork, tap calculated from flow at MFC bus\r\n' ...
+     'mfc setpoint flow, rating +-5%%\r\n'];
 
-% PoLC
-text_polc = ['PoLC setpoint %1.3f, PoLC range %1.3f \r\n' ...
-    'Device rating  %7.2f W\r\n' ...
-    'Power saved %5.5f%%\r\n' ...
-    'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
-fprintf(fileId,text_polc, V_setpt, polc_rating, total_polc_rating, ...
-    total_power_saving, total_loss, comp_loss, device_loss);
 % MFC
-% text_mfc = [desc_txt 'Device rating  %7.2f W\r\n' ...
-%     'Energy saved %5.5f%%\r\n' ...
-%     'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
-% fprintf(fileId,text_mfc, mfc_rating, total_power_saving, total_loss, comp_loss, device_loss);
+text_mfc = [desc_txt 'Device rating  %7.2f W\r\n' ...
+    'Energy saved %5.5f%%\r\n' ...
+    'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
+fprintf(fileId,text_mfc, mfc_rating, total_power_saving, total_loss, comp_loss, device_loss);
 
 fclose(fileId);
+
+toc

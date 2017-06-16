@@ -1,9 +1,5 @@
 %% get load buses with voltage violation
 % load uncompensated flow data and get violated buses
-uncfolder = 'NormalOpWinter';
-filename = [load_profile ' S=' num2str(S_mltp) ''];
-
-load (['./' uncfolder '/unc' filename '.mat']);
 V_lim_uk = 0.94;
 % violations = uncVOLT < V_lim_uk;
 % [viol_buses, ~] = find(violations);
@@ -26,8 +22,7 @@ P0h_polc = P0h(1:num_of_loads,:);
 Q0h_polc = Q0h(1:num_of_loads,:);
 
 % calculate new load bus voltages
-V_setpt = 0.95;
-polc_rating = 0.04;
+polc_rating = 0.05;
 V_comp = uncVOLT(comp_load_buses(:,1),:);
 V_polc = V_comp;
 % figure
@@ -61,6 +56,9 @@ for i=1:size(comp_load_buses,1)
     Q0h_polc(comp_load_buses(i,2),:) = Q0h_polc(comp_load_buses(i,2),:) .* ...
         (V_comp(i,:) ./ uncVOLT(comp_load_buses(i,1),:)).^(nqt(comp_load_buses(i,2)));
 end
+
+energy_saving = (sum(sum(P0h(1:num_of_loads,:))) - sum(sum(P0h_polc)))/ ...
+    sum(sum(P0h(1:num_of_loads,:)))*100
 % add EV/PV
 % ------- EV case ---------------
 % for j=1:num_of_loads
@@ -78,22 +76,22 @@ end
 % end
 % ------------------------------------------------------------
 % ---------------PV and EV case
-% for j=1:num_of_loads
-%     if (mod(j,2) == 0)
-%         P0h_polc(j,:) = P0h_polc(j,:) - 2*solar_winter_day';
-%     else
-%         if (mod(j,6) == 1)
-%             P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape1- 2.*solar_winter_day');
-%         elseif(mod(j,6) == 3)
-%             P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape2- 2.*solar_winter_day');
-%         else
-%             P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape3- 2.*solar_winter_day');
-%         end
-%     end
-% end
+for j=1:num_of_loads
+    if (mod(j,2) == 0)
+        P0h_polc(j,:) = P0h_polc(j,:) - 8*solar_summer_day';
+    else
+        if (mod(j,6) == 1)
+            P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape1- 8.*solar_summer_day');
+        elseif(mod(j,6) == 3)
+            P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape2- 8.*solar_summer_day');
+        else
+            P0h_polc(j,:) = (P0h_polc(j,:) + ev_shape3- 8.*solar_summer_day');
+        end
+    end
+end
 % ---------------PV case
 % for j=1:num_of_loads
-%       P0h_polc(j,:) = P0h_polc(j,:) - 2*solar_winter_day';
+%       P0h_polc(j,:) = P0h_polc(j,:) - 8*solar_winter_day';
 % end
 
 
@@ -101,7 +99,7 @@ S_comp = sqrt(P0h_polc.^2 + Q0h_polc.^2);
 
 I_polc = S_comp(comp_load_buses(:,2),:)./(V_base.*V_comp);
 S_polc = abs(2*V_base*polc_rating*I_polc);
-figure
-boxplot(S_polc')
-title('PoLC power in W');
-total_polc_rating = sum(max(S_polc,[],2))
+% figure
+% boxplot(S_polc')
+% title('PoLC power in W');
+total_polc_rating = 2*sum(max(S_polc,[],2))

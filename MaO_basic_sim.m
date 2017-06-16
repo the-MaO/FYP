@@ -30,6 +30,13 @@ Z_mltp = 1;
 % ratio changes
 XR_mltp = 1;
 
+uncfolder = 'PVEVOpWinter';
+filename = [load_profile ' S=' num2str(S_mltp) ''];
+load (['./' uncfolder '/unc' filename '.mat']);
+load (['./' uncfolder '/polc/' filename '.mat']);         %compensated
+V_setpt = 1;
+pv_mltp = 7;
+
 %% define lines
 % --- format ---
 % 1 from bus | 2 to bus | 3 resistance pu | 4 reactance pu
@@ -71,10 +78,9 @@ end
 
 %% calculate MFC taps or PoLC flow
 
-% MaO_solar
+load solar.mat
 MaO_ev
 MaO_PoLC_compensation
-% MaO_MFC_compensation
 
 %% call script to run simulation and save data
 
@@ -85,61 +91,60 @@ V_lim_uk_b = 0.94;
 V_lim_uk_t = 1.1;
 
 %------------------save simulation data --------------------------
-savefolder = 'NormalOpWinter/polc_DSM';
-uncfolder = 'NormalOpWinter';
 
-mkdir([pwd '/' savefolder]);
-save (['./' savefolder '/' filename '.mat'],...
-    'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
-
-load([uncfolder '/unc' filename '.mat']);
+% mkdir([pwd '/' savefolder]);
+% save (['./' savefolder '/' filename '.mat'],...
+%     'VOLT', 'PLOAD', 'QLOAD', 'PGEN', 'QGEN', 'PLINE', 'QLINE')
+% 
+% load([uncfolder '/unc' filename '.mat']);
 % ----------------------plot uncompensated voltages--------------------
-figure
-% MFC
-% boxplot(uncVOLT(load_indx,:)','Labels', num2cell(load_indx))
-% PoLC
-boxplot(uncVOLT(load_indx,:)','Labels',num2cell(load_indx));
-%---
-xlabel('load bus number');
-ylabel('voltage p.u.');
-title('Uncompensated voltages');
-hold on
-plot(xlim,[0.94 0.94],'g');
-plot(xlim,[1.1 1.1],'g');
-% ylim([0.935 1.105])
-grid on
-savefig(['./' savefolder '/uncVoltages.fig']);
+% figure
+% % MFC
+% % boxplot(uncVOLT(load_indx,:)','Labels', num2cell(load_indx))
+% % PoLC
+% boxplot(uncVOLT(load_indx,:)','Labels',num2cell(load_indx));
+% %---
+% xlabel('load bus number');
+% ylabel('voltage p.u.');
+% title('Uncompensated voltages');
+% hold on
+% plot(xlim,[0.94 0.94],'g');
+% plot(xlim,[1.1 1.1],'g');
+% % ylim([0.935 1.105])
+% grid on
+% savefig(['./' savefolder '/uncVoltages.fig']);
 
 %-------------------------plot compensated voltages -----------------------
-figure
-% MFC
-% boxplot(VOLT(load_indx,:)','Labels', num2cell(load_indx))
-% PoLC
-boxplot(V_comp', 'Labels',num2cell(comp_load_buses(:,1)), 'Symbol', 'r+');
-%---
-xlabel('load bus number');
-ylabel('voltage p.u.');
-title('Compensated voltages');
-hold on
-plot(xlim,[0.94 0.94],'g');
-plot(xlim,[1.1 1.1],'g');
-% ylim([0.935 1.105])
-grid on
-savefig(['./' savefolder '/voltages.fig']);
+% c_volt_plot = VOLT(load_indx,:);
+% for i=1:size(comp_load_buses,1)
+%     c_volt_plot(comp_load_buses(i,2),:) = V_comp(i,:);
+% end
+% figure
+% boxplot(c_volt_plot(1:21,:)', 'Labels',num2cell(load_indx), 'Symbol', 'r+');
+% %---
+% xlabel('load bus number');
+% ylabel('voltage p.u.');
+% title('Compensated voltages');
+% hold on
+% plot(xlim,[0.94 0.94],'g');
+% plot(xlim,[1.1 1.1],'g');
+% % ylim([0.935 1.105])
+% grid on
+% savefig(['./' savefolder '/voltages.fig']);
 
 % ploting_netwrok_Updated
 % savefig(['./' savefolder '/map.fig']);
 
 %---------------plot bus 906 voltage for optical check
-figure
-% plot(VOLT(906,:))           %MFC
-plot(V_comp(end,:))         %PoLC
-hold on
-plot(uncVOLT(906,:))
-grid on
-legend('compensated','uncompensated')
-title('bus 906 voltage')
-savefig(['./' savefolder '/bus906.fig']);
+% figure
+% % plot(VOLT(906,:))           %MFC
+% plot(V_comp(end,:))         %PoLC
+% hold on
+% plot(uncVOLT(906,:))
+% grid on
+% legend('compensated','uncompensated')
+% title('bus 906 voltage')
+% savefig(['./' savefolder '/bus906.fig']);
 
 
 % -----------------calculate power saving in percent-------------
@@ -151,71 +156,72 @@ total_power_saving = (sum(sum(uncPGEN))-sum(sum(PGEN)))/(sum(sum(uncPGEN)))*100
 % mfc_rating = max(I_mfc * range(MFC) * V_base)
 
 %----------------calculate losses----------------------------------------
-comp_loss = (sum(sum(PGEN)) - sum(sum(PLOAD)))/sum(sum(PGEN))*100
+cable_loss = sum(sum(PGEN) - sum(PLOAD))/sum(sum(abs(PGEN)))*100
 device_loss_pc = 0.02;
 % device_loss = (mfc_rating * device_loss_pc)/sum(sum(PGEN)) * 100
-device_loss = (total_polc_rating * device_loss_pc)/sum(sum(PGEN)) * 100
-total_loss = comp_loss + device_loss
+device_loss = (total_polc_rating * device_loss_pc)/sum(sum(abs(PGEN))) * 100
+% total_loss = comp_loss + device_loss
+
+pv_thruput = sum(sum(abs(PGEN(PGEN<0))) - sum(abs(uncPGEN(uncPGEN<0))))/...
+    sum(sum(abs(uncPGEN(uncPGEN<0))))*100
+
 
 %--------------plot total power flow in/out of the feeder---------------
-figure
-plot(0:1/60:24-1/60,PGEN(907,:));
-subs_pwr = PGEN(907,:);
-pwr_out = sum(subs_pwr(subs_pwr<0))
-pwr_in = sum(subs_pwr(subs_pwr>0))
-xlabel('time [hr]');
-ylabel('power [kW]');
-hold on
-plot(0:1/60:24-1/60,sum(PLOAD,1));
-legend('power from substation','power to all loads');
-title('compensated power flow')
-grid on
-savefig(['./' savefolder '/powerflow.fig']);
+% figure
+% plot(0:1/60:24-1/60,PGEN(907,:));
+% subs_pwr = PGEN(907,:);
+% pwr_out = sum(subs_pwr(subs_pwr<0))
+% pwr_in = sum(subs_pwr(subs_pwr>0))
+% xlabel('time [hr]');
+% ylabel('power [kW]');
+% hold on
+% plot(0:1/60:24-1/60,sum(PLOAD,1));
+% legend('power from substation','power to all loads');
+% title('compensated power flow')
+% grid on
+% savefig(['./' savefolder '/powerflow.fig']);
 
-figure
-plot(0:1/60:24-1/60,uncPGEN(907,:));
-uncsubs_pwr = uncPGEN(907,:);
-uncpwr_out = sum(uncsubs_pwr(uncsubs_pwr<0))
-uncpwr_in = sum(uncsubs_pwr(uncsubs_pwr>0))
-xlabel('time [hr]');
-ylabel('power [kW]');
-hold on
-plot(0:1/60:24-1/60,sum(uncPLOAD,1));
-legend('power from substation','power to all loads');
-title('uncompensated power flow')
-grid on
-savefig(['./' savefolder '/uncpowerflow.fig']);
+% figure
+% plot(0:1/60:24-1/60,uncPGEN(907,:));
+% uncsubs_pwr = uncPGEN(907,:);
+% uncpwr_out = sum(uncsubs_pwr(uncsubs_pwr<0))
+% uncpwr_in = sum(uncsubs_pwr(uncsubs_pwr>0))
+% xlabel('time [hr]');
+% ylabel('power [kW]');
+% hold on
+% plot(0:1/60:24-1/60,sum(uncPLOAD,1));
+% legend('power from substation','power to all loads');
+% title('uncompensated power flow')
+% grid on
+% savefig(['./' savefolder '/uncpowerflow.fig']);
 
-figure
-plot(0:1/60:24-1/60,uncPGEN(907,:)-PGEN(907,:));
-hold on
-plot(0:1/60:24-1/60,sum(uncPLOAD,1)-sum(PLOAD,1));
-xlabel('time [hr]');
-ylabel('power [kW]');
-legend('power from substation','power to all loads');
-title('power flow difference (uncompensated - compensated)')
-grid on
-savefig(['./' savefolder '/powerflowdiff.fig']);
+% figure
+% plot(0:1/60:24-1/60,uncPGEN(907,:)-PGEN(907,:));
+% xlabel('time [hr]');
+% ylabel('power [kW]');
+% title('power flow difference (uncompensated - compensated)')
+% grid on
+% savefig(['./' savefolder '/powerflowdiff.fig']);
 
 
 
 %----------------write metrics into text file----------------------
-fileId = fopen(['./' savefolder '/resultsmfc.txt'], 'w');
-% desc_txt = ['MFC before fork, tap calculated from flow at MFC bus\r\n' ...
-%     'mfc setpoint flow, rating +-4%%\r\n'];
-desc_txt = 'PoLC setpoint 1, rating 0.04\r\n';
-
-% PoLC
-text_polc = ['PoLC setpoint %1.3f, PoLC range %1.3f \r\n' ...
-    'Device rating  %7.2f W\r\n' ...
-    'Power saved %5.5f%%\r\n' ...
-    'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
-fprintf(fileId,text_polc, V_setpt, polc_rating, total_polc_rating, ...
-    total_power_saving, total_loss, comp_loss, device_loss);
-% MFC
-% text_mfc = [desc_txt 'Device rating  %7.2f W\r\n' ...
-%     'Energy saved %5.5f%%\r\n' ...
+% fileId = fopen(['./' savefolder '/resultsmfc.txt'], 'w');
+% % desc_txt = ['MFC before fork, tap calculated from flow at MFC bus\r\n' ...
+% %     'mfc setpoint flow, rating +-4%%\r\n'];
+% desc_txt = 'PoLC setpoint 1, rating 0.05\r\n';
+% 
+% % PoLC
+% text_polc = ['PoLC setpoint %1.3f, PoLC range %1.3f \r\n' ...
+%     'Device rating  %7.2f W\r\n' ...
+%     'Power saved %5.5f%%\r\n' ...
 %     'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
-% fprintf(fileId,text_mfc, mfc_rating, total_power_saving, total_loss, comp_loss, device_loss);
-
-fclose(fileId);
+% fprintf(fileId,text_polc, V_setpt, polc_rating, total_polc_rating, ...
+%     total_power_saving, total_loss, comp_loss, device_loss);
+% % MFC
+% % text_mfc = [desc_txt 'Device rating  %7.2f W\r\n' ...
+% %     'Energy saved %5.5f%%\r\n' ...
+% %     'Total loss %1.4f%% in cable %1.4f%% in device %1.4f%%'];
+% % fprintf(fileId,text_mfc, mfc_rating, total_power_saving, total_loss, comp_loss, device_loss);
+% 
+% fclose(fileId);

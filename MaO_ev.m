@@ -17,13 +17,13 @@ ev_shape3 = circshift(ev_shape', [1380,0])';
 ev_shape3 = ev_shape3/3.68*6.5;
 % ev_shape2 = ev_shape2/3.6*6.5;
 
-% figure
-% plot(0:1/60:24-1/60, ev_shape1, 'LineWidth', 2)
-% hold on
-% plot(0:1/60:24-1/60, ev_shape2, 'LineWidth', 2)
-% plot(0:1/60:24-1/60, ev_shape3, 'LineWidth', 2)
-% grid on
-% title ('EV demand curves')
-% xlabel('time [h]');
-% ylabel('power [W]');
-% legend ('shape 1', 'shape 2', 'shape 3');
+figure
+plot(0:1/60:24-1/60, ev_shape1, 'LineWidth', 2)
+hold on
+plot(0:1/60:24-1/60, ev_shape2, 'LineWidth', 2)
+plot(0:1/60:24-1/60, ev_shape3, 'LineWidth', 2)
+grid on
+title ('EV demand curves')
+xlabel('time [h]');
+ylabel('power [W]');
+legend ('shape 1', 'shape 2', 'shape 3');
